@@ -1,51 +1,59 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace MyClassLibrary
 {
-    public class Class1
+    public class MyClass
     {
 
         public Dictionary<string, int> ProcessTextParallel(string text)
         {
-            // Разбиение текста на отдельные части
-            string[] parts = text.Split(new char[] { ' ', ',', '.', ':', ';', '(', ')', '[', ']', '-', '!', '?', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries); ;
+        
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
-            // Создание результирующего словаря
-            Dictionary<string, int> result = new Dictionary<string, int>();
+            ConcurrentDictionary<string, int> wordCount = new ConcurrentDictionary<string, int>();
 
-            // Запуск обработки каждой части текста в отдельном потоке
-            Parallel.ForEach(parts, part =>
+            char[] separators = { ' ', ',', '.', ':', ';', '(', ')', '[', ']', '-', '!', '?', '\t', '\n', '\r' };
+
+            string[] lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+            var tasks = new Task[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
             {
-                // Обработка текущей части текста
-                Dictionary<string, int> partialResult = ProcessText(part);
+                string line = lines[i];
+                // Разбиваем строку на слова
+                string[] words = line.Split(separators, StringSplitOptions.RemoveEmptyEntries);
 
-                // Добавление результатов в результирующий словарь
-                lock (result)
+                tasks[i] = Task.Run(() =>
                 {
-                    foreach (var entry in partialResult)
+                    // Считаем количество каждого слова в строке
+                    foreach (string word in words)
                     {
-                        if (result.ContainsKey(entry.Key))
-                        {
-                            result[entry.Key] += entry.Value;
-                        }
-                        else
-                        {
-                            result[entry.Key] = entry.Value;
-                        }
+                        wordCount.AddOrUpdate(word, 1, (_, count) => count + 1);
                     }
-                }
-            });
+                });
+            }
 
-            return result;
+            // Ожидаем завершения всех задач
+            Task.WaitAll(tasks);
+
+            stopwatch.Stop();
+            Console.WriteLine("Время выполнения публичного метода с многопоточной обработкой: " + stopwatch.Elapsed);
+
+            return new Dictionary<string, int>(wordCount);
         }
 
 
         private Dictionary<string, int> ProcessText(string text)
+
         {
+
+            // Измерение времени выполнения публичного метода с помощью объекта Stopwatch
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
             Dictionary<string, int> wordCounts = new Dictionary<string, int>();
 
             string[] words = text.Split(new char[] { ' ', ',', '.', ':', ';', '(', ')', '[', ']', '-', '!', '?', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
@@ -59,6 +67,9 @@ namespace MyClassLibrary
                 }
                 wordCounts[cleanWord]++;
             }
+
+            stopwatch.Stop();
+            Console.WriteLine("Время выполнения приватного метода: " + stopwatch.Elapsed);
 
             return wordCounts;
         }

@@ -24,26 +24,22 @@ namespace MyApplication
             string text = File.ReadAllText(filePath);
 
             // Создание экземпляра класса из DLL
-            var classInstance = new Class1();
-            var type = typeof(Class1);
+            var classInstance = new MyClass();
+            var type = typeof(MyClass);
             var method = type.GetMethod("ProcessText", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            // Вызов приватного метода из DLL
             Dictionary<string, int> result = (Dictionary<string, int>)method.Invoke(classInstance, new object[] { text }); ;
-            stopwatch.Stop();
-            Console.WriteLine("Время выполнения приватного метода: " + stopwatch.Elapsed);
 
-            stopwatch.Restart();
             // Вызов публичного метода, реализующий обработку текста используя потоки
             Dictionary<string, int> parallelResult = classInstance.ProcessTextParallel(text);
-            stopwatch.Stop();
-            Console.WriteLine("Время выполнения публичного метода с многопоточной обработкой: " + stopwatch.Elapsed);
+
+            List<KeyValuePair<string, int>> sortedWordCounts = parallelResult.ToList();
+            sortedWordCounts.Sort((x, y) => y.Value.CompareTo(x.Value));
 
             // Запись результата в файл
             using (StreamWriter writer = new StreamWriter(resultFilePath))
             {
-                foreach (var entry in parallelResult)
+                foreach (var entry in sortedWordCounts)
                 {
                     writer.WriteLine($"{entry.Key}: {entry.Value}");
                 }
