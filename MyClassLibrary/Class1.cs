@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MyClassLibrary
@@ -11,8 +12,6 @@ namespace MyClassLibrary
 
         public Dictionary<string, int> ProcessTextParallel(string text)
         {
-        
-            Stopwatch stopwatch = Stopwatch.StartNew();
 
             ConcurrentDictionary<string, int> wordCount = new ConcurrentDictionary<string, int>();
 
@@ -40,20 +39,23 @@ namespace MyClassLibrary
             // Ожидаем завершения всех задач
             Task.WaitAll(tasks);
 
-            stopwatch.Stop();
-            Console.WriteLine("Время выполнения публичного метода с многопоточной обработкой: " + stopwatch.Elapsed);
+            List<KeyValuePair<string, int>> sortedWordCounts = new Dictionary<string, int>(wordCount).ToList();
+            sortedWordCounts.Sort((x, y) => y.Value.CompareTo(x.Value));
 
-            return new Dictionary<string, int>(wordCount);
+            Dictionary<string, int> sortedWordCountsDictionary = new Dictionary<string, int>();
+
+            foreach (KeyValuePair<string, int> kvp in sortedWordCounts)
+            {
+                sortedWordCountsDictionary.Add(kvp.Key, kvp.Value);
+            }
+
+            return sortedWordCountsDictionary;
         }
 
 
         private Dictionary<string, int> ProcessText(string text)
 
         {
-
-            // Измерение времени выполнения публичного метода с помощью объекта Stopwatch
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
             Dictionary<string, int> wordCounts = new Dictionary<string, int>();
 
             string[] words = text.Split(new char[] { ' ', ',', '.', ':', ';', '(', ')', '[', ']', '-', '!', '?', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
@@ -68,10 +70,17 @@ namespace MyClassLibrary
                 wordCounts[cleanWord]++;
             }
 
-            stopwatch.Stop();
-            Console.WriteLine("Время выполнения приватного метода: " + stopwatch.Elapsed);
+            List<KeyValuePair<string, int>> sortedWordCounts = new Dictionary<string, int>(wordCounts).ToList();
+            sortedWordCounts.Sort((x, y) => y.Value.CompareTo(x.Value));
 
-            return wordCounts;
+            Dictionary<string, int> sortedWordCountsDictionary = new Dictionary<string, int>();
+
+            foreach (KeyValuePair<string, int> kvp in sortedWordCounts)
+            {
+                sortedWordCountsDictionary.Add(kvp.Key, kvp.Value);
+            }
+
+            return sortedWordCountsDictionary;
         }
     }
 }
