@@ -33,8 +33,7 @@ namespace MyApplication
             // Вызов публичного метода, реализующий обработку текста используя потоки
             Dictionary<string, int> parallelResult = classInstance.ProcessTextParallel(text);
 
-            List<KeyValuePair<string, int>> sortedWordCounts = parallelResult.ToList();
-            sortedWordCounts.Sort((x, y) => y.Value.CompareTo(x.Value));
+
 
             // Запись результата в файл
             using (StreamWriter writer = new StreamWriter(resultFilePath))
